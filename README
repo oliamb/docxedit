@@ -1,8 +1,31 @@
-Word Open Document Format VERY Minimal Editor
+Ruby Docx Edit
+==============
 
-A quick piece of code that let you:
+A very minimal Ruby library that let you edit .docx file in some simple way
 
 * make string replacement in .docx document
-* insert new paragraphe using XML before or after a block of text (useful)
+* insert new paragraphe using XML before or after a block of text
+
+This is not meant to be fully functional or even completed in the future, take this code if you want at your own risk.
+
+
+
+ require 'docxedit'
+ doc = DocxEdit::Docx.new('mydocfile.docx')
+ doc.contains? /A simple string/ #return true if regexp is match in one of the document xml node
+ doc.replace(/str_to_find/, "replacement") #replace the matched string with "replacement" string
+ block = doc.find_block_with_content("[[EXACT block content]]") #return a ContentBlock object
+
+ # insert a new block of text before block
+ doc.insert(:before, block, ContentBlock.new("<w:p><w:r>A new block for this file.</w:r></w:p>", "A new block for this file."))
+
+VERSIONS
+========
+0.0.1 First release
+
+ROADMAP
+=======
+No more development planned for now
+
 
 homepage: https://github.com/oliamb/docxedit
