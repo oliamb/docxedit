@@ -1,7 +1,6 @@
 source "http://rubygems.org"
 
-# gem "rails"
-gem "rubyzip"
+gemspec
 
 group :test do
   gem "rspec"
