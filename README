@@ -1,0 +1,8 @@
+Word Open Document Format VERY Minimal Editor
+
+A quick piece of code that let you:
+
+* make string replacement in .docx document
+* insert new paragraphe using XML before or after a block of text (useful)
+
+homepage: https://github.com/oliamb/docxedit
