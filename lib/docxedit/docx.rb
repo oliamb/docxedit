@@ -1,5 +1,6 @@
 require 'zip/zip'
 require "rexml/document"
+require 'tempfile'
 require_relative 'content_block'
 
 module DocxEdit
@@ -59,12 +60,24 @@ module DocxEdit
     end
     
     def write_content()
-      @zip_file.get_output_stream(DOCUMENT_FILE_PATH) do |input|
+      temp_file = Tempfile.new('docxedit-')
+      Zip::ZipOutputStream.open(temp_file.path) do |zos|
+        @zip_file.entries.each do |e|
+          unless e.name == DOCUMENT_FILE_PATH
+            zos.put_next_entry(e.name)
+            zos.print e.get_input_stream.read
+          end
+        end
+        
+        zos.put_next_entry(DOCUMENT_FILE_PATH)
         output = ""
         @xml_document.write(output, 0)
-        input.write output
+        zos.print output
       end
-      @zip_file.commit
+      path = @zip_file.name
+      FileUtils.rm(path)
+      FileUtils.mv(temp_file.path, path)
+      @zip_file = Zip::ZipFile.new(path)
     end
   end
 end
