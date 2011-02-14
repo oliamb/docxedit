@@ -20,4 +20,15 @@ describe "DocxEdit::ContentBlock", "#score" do
     @cb.content = "Another content"
     @cb.xml.to_s.should eql REXML::Document.new("<p><r>Another content</r></p>").to_s
   end
+  
+  it "can be cloned" do
+    new_cb = @cb.clone
+    new_cb.content = "Another content"
+    @cb.content.should eql @content
+    
+    REXML::XPath.first(new_cb.xml, "//r").should_not be_nil
+    REXML::XPath.first(new_cb.xml, "//r").remove
+    REXML::XPath.first(new_cb.xml, "//r").should be_nil
+    REXML::XPath.first(@cb.xml, "//r").should_not be_nil
+  end
 end

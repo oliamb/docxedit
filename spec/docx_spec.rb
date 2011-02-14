@@ -38,6 +38,14 @@ describe "DocxEdit::Docx", "#score" do
     doc2.contains?(/\[WEEKLY_REPORT_WEEK_PARAGRAPH\]/).should be_false
   end
   
+  it "commit change whith a bigger end file size" do
+    REXML::XPath.first(@doc.xml_document, "/*/*") << (REXML::Document.new "<root><p>A very long XML content</p><p>A very long XML content</p><p>A very long XML content</p><p>A very long XML content</p><p>A very long XML content</p><p>A very long XML content</p><p>A very long XML content</p><p>A very long XML content</p><p>A very long XML content</p><p>A very long XML content</p><p>A very long XML content</p><p>A very long XML content</p><p>A very long XML content</p><p>A very long XML content</p><p>A very long XML content</p><p>A very long XML content</p><p>A very long XML content</p><p>A very long XML content</p><p>A very long XML content</p></root>")
+    @doc.commit
+    doc2 = DocxEdit::Docx.new(File.join(@tmpdir, 'Archive4.docx'))
+    doc2.contains?(/A very long XML content/).should(be_true, doc2.xml_document.to_s)
+    doc2.contains?(/\[WEEKLY_REPORT_WEEK_PARAGRAPH\]/).should be_true
+  end
+  
   it "find a content block given its exact content string" do
     content = @doc.find_block_with_content("[WEEKLY_REPORT_WEEK_PARAGRAPH]")
     content.xml.should_not be_nil
