@@ -26,6 +26,12 @@ describe "DocxEdit::Docx", "#score" do
     @doc.contains?(/\[WEEKLY_REPORT_WEEK_PARAGRAPH\]/).should be_false
   end
   
+  it "replace a given string in header" do
+    @doc.replace(/\[BENEFICIARY_FULL_NAME\]/, "Another replacement string")
+    @doc.contains?(/Another replacement string/).should be_true
+    @doc.contains?(/\[BENEFICIARY_FULL_NAME\]/).should be_false
+  end
+  
   it "commit change to file" do
     @doc.replace(/\[WEEKLY_REPORT_WEEK_PARAGRAPH\]/, "Another replacement string")
     @doc.contains?(/Another replacement string/).should be_true
@@ -36,6 +42,18 @@ describe "DocxEdit::Docx", "#score" do
     doc2 = DocxEdit::Docx.new(File.join(@tmpdir, 'Archive4.docx'))
     doc2.contains?(/Another replacement string/).should(be_true, doc2.xml_document.to_s)
     doc2.contains?(/\[WEEKLY_REPORT_WEEK_PARAGRAPH\]/).should be_false
+  end
+  
+  it "commit change to header" do
+    @doc.replace(/\[BENEFICIARY_FULL_NAME\]/, "Another replacement string")
+    @doc.contains?(/Another replacement string/).should be_true
+    @doc.contains?(/\[BENEFICIARY_FULL_NAME\]/).should be_false
+    
+    @doc.commit
+    
+    doc2 = DocxEdit::Docx.new(File.join(@tmpdir, 'Archive4.docx'))
+    doc2.contains?(/Another replacement string/).should(be_true, doc2.xml_headers[0].to_s)
+    doc2.contains?(/\[BENEFICIARY_FULL_NAME\]/).should be_false
   end
   
   it "commit change whith a bigger end file size" do

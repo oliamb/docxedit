@@ -5,16 +5,22 @@ require_relative 'content_block'
 
 module DocxEdit
   class Docx    
-    attr_reader :zip_file, :xml_document
+    attr_reader :zip_file, :xml_document, :xml_headers, :xml_footers
     
     def initialize(path)
       @zip_file = Zip::ZipFile.new(path)
-      @xml_document = REXML::Document.new(read_content)
+      bind_contents
+    end
+    
+    def files
+      return @xml_headers + @xml_footers + [@xml_document]
     end
     
     def contains?(text)
-      REXML::XPath.each @xml_document, XPATH_ALL_TEXT_NODE do |n|
-        return true if n.text =~ text
+      files.each do |f|
+        REXML::XPath.each f, XPATH_ALL_TEXT_NODE do |n|
+          return true if n.text =~ text
+        end
       end
       return false
     end
@@ -25,14 +31,18 @@ module DocxEdit
     end
     
     def replace(reg_to_match, replacement)
-      REXML::XPath.each @xml_document, XPATH_ALL_TEXT_NODE do |n|
-        n.text = n.text.gsub(reg_to_match, replacement)
+      files.each do |f|
+        REXML::XPath.each f, XPATH_ALL_TEXT_NODE do |n|
+          n.text = n.text.gsub(reg_to_match, replacement)
+        end
       end
     end
     
     def find_block_with_content(exact_content_string)
-      node = REXML::XPath.first(@xml_document, "//w:p[descendant-or-self::*[text()='#{exact_content_string}']]")
-      return ContentBlock.new(node, exact_content_string)
+      files.each do
+        node = REXML::XPath.first(@xml_document, "//w:p[descendant-or-self::*[text()='#{exact_content_string}']]")
+        return ContentBlock.new(node, exact_content_string) unless node.nil?
+      end
     end
     
     # insert the xml of a content block :before or :after the anchor_block
@@ -55,25 +65,60 @@ module DocxEdit
     DOCUMENT_FILE_PATH = 'word/document.xml'
     XPATH_ALL_TEXT_NODE = "//*[text()]"
   
-    def read_content()
-      return text = @zip_file.read(DOCUMENT_FILE_PATH)
+    def bind_contents
+      @xml_document = REXML::Document.new(@zip_file.read(DOCUMENT_FILE_PATH))
+      @xml_headers = []
+      @xml_footers = []
+      REXML::Document.new(@zip_file.read(DOCUMENT_FILE_PATH))
+      
+      idx = 1
+      src = read_or_nil("word/header#{idx}.xml")
+      while(!src.nil?) do
+        @xml_headers << REXML::Document.new(src)
+        idx = idx + 1
+        src = read_or_nil("word/header#{idx}.xml")
+      end
+      
+      idx = 1
+      src = read_or_nil("word/footer#{idx}.xml")
+      while(!src.nil?) do
+        @xml_headers << REXML::Document.new(src)
+        idx = idx + 1
+        src = read_or_nil("word/footer#{idx}.xml")
+      end
+    end
+    
+    
+    def read_or_nil(name)
+      return @zip_file.read(name) rescue return nil
+    end
+    
+    def write_entry(zip_output_stream, entry_name, xml_doc)
+      zip_output_stream.put_next_entry(entry_name)
+      output = ""
+      xml_doc.write(output, 0)
+      zip_output_stream.print output
     end
     
     def write_content()
       temp_file = Tempfile.new('docxedit-')
       Zip::ZipOutputStream.open(temp_file.path) do |zos|
         @zip_file.entries.each do |e|
-          unless e.name == DOCUMENT_FILE_PATH
+          unless e.name == DOCUMENT_FILE_PATH || e.name =~ /word\/(header|footer)[0-9]+\.xml/
             zos.put_next_entry(e.name)
             zos.print e.get_input_stream.read
           end
         end
         
-        zos.put_next_entry(DOCUMENT_FILE_PATH)
-        output = ""
-        @xml_document.write(output, 0)
-        zos.print output
+        write_entry(zos, DOCUMENT_FILE_PATH, @xml_document)
+        (0 .. @xml_headers.size - 1).each do |idx|
+          write_entry zos, "word/header#{idx + 1}.xml", @xml_headers[idx]
+        end
+        (0 .. @xml_footers.size - 1).each do |idx|
+          write_entry zos, "word/footer#{idx + 1}.xml", @xml_footers[idx]
+        end
       end
+      
       path = @zip_file.name
       FileUtils.rm(path)
       FileUtils.mv(temp_file.path, path)

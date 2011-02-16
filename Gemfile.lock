@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    docxedit (0.0.4)
+    docxedit (0.0.5)
       rubyzip
 
 GEM
