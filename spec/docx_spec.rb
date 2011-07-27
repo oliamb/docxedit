@@ -1,6 +1,7 @@
 require 'docxedit'
 require 'zip/zip'
 require 'tmpdir'
+require 'ruby-debug'
 
 describe "DocxEdit::Docx", "#score" do
   
@@ -42,6 +43,23 @@ describe "DocxEdit::Docx", "#score" do
     doc2 = DocxEdit::Docx.new(File.join(@tmpdir, 'Archive4.docx'))
     doc2.contains?(/Another replacement string/).should(be_true, doc2.xml_document.to_s)
     doc2.contains?(/\[WEEKLY_REPORT_WEEK_PARAGRAPH\]/).should be_false
+  end
+
+  it "commits changes to file at a new location, leaving the old version alone" do
+    @doc.replace(/\[WEEKLY_REPORT_WEEK_PARAGRAPH\]/, "Another replacement string")
+    @doc.contains?(/Another replacement string/).should be_true
+    @doc.contains?(/\[WEEKLY_REPORT_WEEK_PARAGRAPH\]/).should be_false
+
+    @doc.commit(File.join(@tmpdir, 'Archive4Copy.docx'))
+
+    doc2 = DocxEdit::Docx.new(File.join(@tmpdir, 'Archive4Copy.docx'))
+    doc2.contains?(/Another replacement string/).should(be_true, doc2.xml_document.to_s)
+    doc2.contains?(/\[WEEKLY_REPORT_WEEK_PARAGRAPH\]/).should be_false
+
+    doc1 = DocxEdit::Docx.new(File.join(@tmpdir, 'Archive4.docx'))
+    doc1.contains?(/Another replacement string/).should(be_false, doc1.xml_document.to_s)
+    doc1.contains?(/\[WEEKLY_REPORT_WEEK_PARAGRAPH\]/).should be_true
+
   end
   
   it "commit change to header" do

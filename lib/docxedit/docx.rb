@@ -26,8 +26,8 @@ module DocxEdit
     end
     
     # Persist changes in the Zip file
-    def commit
-      write_content
+    def commit(new_path=nil)
+      write_content(new_path)
     end
     
     def replace(reg_to_match, replacement)
@@ -100,7 +100,7 @@ module DocxEdit
       zip_output_stream.print output
     end
     
-    def write_content()
+    def write_content(new_path=nil)
       temp_file = Tempfile.new('docxedit-')
       Zip::ZipOutputStream.open(temp_file.path) do |zos|
         @zip_file.entries.each do |e|
@@ -119,8 +119,12 @@ module DocxEdit
         end
       end
       
-      path = @zip_file.name
-      FileUtils.rm(path)
+      if new_path.nil?
+        path = @zip_file.name
+        FileUtils.rm(path)
+      else
+        path = new_path
+      end
       FileUtils.mv(temp_file.path, path)
       @zip_file = Zip::ZipFile.new(path)
     end
