@@ -15,7 +15,7 @@ describe "DocxEdit::Docx", "#score" do
     @doc.zip_file.should_not be_nil
     @doc.zip_file.kind_of?(Zip::ZipFile).should be_true
   end
-  
+
   it "find a given text string" do
     @doc.contains?(/\[WEEKLY_REPORT_WEEK_PARAGRAPH\]/).should be_true
     @doc.contains?(/inexistant string/).should be_false
@@ -45,6 +45,21 @@ describe "DocxEdit::Docx", "#score" do
     doc2.contains?(/\[WEEKLY_REPORT_WEEK_PARAGRAPH\]/).should be_false
   end
 
+  it "can make changes to the docx document in a non-default temp directory" do
+    tmpdir2 = Dir.mktmpdir
+    FileUtils.copy(File.join(File.dirname(__FILE__), 'fixtures/Archive4.docx'), tmpdir2)
+    doc = DocxEdit::Docx.new(File.join(tmpdir2, 'Archive4.docx'), "#{File.dirname(__FILE__)}")
+
+    doc.replace(/\[WEEKLY_REPORT_WEEK_PARAGRAPH\]/, "Another replacement string")
+    doc.commit
+
+    doc2 = DocxEdit::Docx.new(File.join(tmpdir2, 'Archive4.docx'))
+    doc2.contains?(/Another replacement string/).should(be_true, doc2.xml_document.to_s)
+    doc2.contains?(/\[WEEKLY_REPORT_WEEK_PARAGRAPH\]/).should be_false
+
+  end
+
+
   it "commits changes to file at a new location, leaving the old version alone" do
     @doc.replace(/\[WEEKLY_REPORT_WEEK_PARAGRAPH\]/, "Another replacement string")
     @doc.contains?(/Another replacement string/).should be_true
@@ -61,7 +76,7 @@ describe "DocxEdit::Docx", "#score" do
     doc1.contains?(/\[WEEKLY_REPORT_WEEK_PARAGRAPH\]/).should be_true
 
   end
-  
+
   it "commit change to header" do
     @doc.replace(/\[BENEFICIARY_FULL_NAME\]/, "Another replacement string")
     @doc.contains?(/Another replacement string/).should be_true

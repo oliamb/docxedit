@@ -7,8 +7,9 @@ module DocxEdit
   class Docx    
     attr_reader :zip_file, :xml_document, :xml_headers, :xml_footers
     
-    def initialize(path)
+    def initialize(path, temp_dir=nil)
       @zip_file = Zip::ZipFile.new(path)
+      @temp_dir = temp_dir
       bind_contents
     end
     
@@ -101,7 +102,11 @@ module DocxEdit
     end
     
     def write_content(new_path=nil)
-      temp_file = Tempfile.new('docxedit-')
+      if @temp_dir.nil?
+        temp_file = Tempfile.new('docxedit-')
+      else
+        temp_file = Tempfile.new('docxedit-', @temp_dir)
+      end
       Zip::ZipOutputStream.open(temp_file.path) do |zos|
         @zip_file.entries.each do |e|
           unless e.name == DOCUMENT_FILE_PATH || e.name =~ /word\/(header|footer)[0-9]+\.xml/
