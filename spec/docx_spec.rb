@@ -1,7 +1,6 @@
 require 'docxedit'
 require 'zip/zip'
 require 'tmpdir'
-require 'ruby-debug'
 
 describe "DocxEdit::Docx", "#score" do
   

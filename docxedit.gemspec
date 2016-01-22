@@ -4,7 +4,7 @@ lib = File.expand_path('../lib/', __FILE__)
 $:.unshift lib unless $:.include?(lib)
 require 'docxedit/version'
 
-spec = Gem::Specification.new do |s|
+Gem::Specification.new do |s|
   s.name = 'docxedit'
   s.version = DocxEdit::VERSION
   s.platform    = Gem::Platform::RUBY
@@ -16,8 +16,8 @@ spec = Gem::Specification.new do |s|
   s.require_path = 'lib'
   
   s.add_dependency('rubyzip')
+  s.add_dependency('zip-zip')
   s.add_development_dependency "rspec"
-  
   
   s.author = "Olivier Amblet"
   s.email = "olivier@amblet.net"
